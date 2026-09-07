@@ -4,15 +4,14 @@ import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.graph.agent.ReactAgent;
 import com.alibaba.cloud.ai.graph.exception.GraphRunnerException;
-import org.cvicse.saa.learn.step01_baseAgent.WeatherTool;
 import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.metadata.ChatResponseMetadata;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.tool.ToolCallback;
-import org.springframework.ai.tool.function.FunctionToolCallback;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 
-public class ch02_token {
+import java.util.List;
+
+public class ch06_ReactAgentUseMessage {
+
 
     public static void main(String[] args) {
         try {
@@ -23,6 +22,7 @@ public class ch02_token {
     }
 
     public static void starter() throws GraphRunnerException {
+
         String apiKey = System.getenv("AI_DASHSCOPE_API_KEY");
         System.out.println("apiKey = " + apiKey);
 
@@ -36,16 +36,24 @@ public class ch02_token {
                 .dashScopeApi(dashScopeApi)
                 .build();
 
-        ChatResponse response = chatModel.call(new Prompt("旧金山的天气怎么样"));
-        System.out.println(response);
-        ChatResponseMetadata metadata = response.getMetadata();
+        ReactAgent agent = ReactAgent.builder()
+                .name("my_agent")
+                .model(chatModel)
+                .systemPrompt("你是一个有帮助的助手")
+                .build();
 
-        // 访问使用信息
-        if (metadata != null && metadata.getUsage() != null) {
-            System.out.println("Input tokens: " + metadata.getUsage().getPromptTokens());
-            System.out.println("Output tokens: " + metadata.getUsage().getCompletionTokens());
-            System.out.println("Total tokens: " + metadata.getUsage().getTotalTokens());
-        }
+        // 使用字符串
+        AssistantMessage response1 = agent.call("你好");
 
+        // 使用 UserMessage
+        UserMessage userMsg = new UserMessage("帮我写一首诗");
+        AssistantMessage response2 = agent.call(userMsg);
+
+        // 使用消息列表
+        List<Message> messages = List.of(
+                new UserMessage("我喜欢春天"),
+                new UserMessage("写一首关于春天的诗")
+        );
+        AssistantMessage response3 = agent.call(messages);
     }
 }

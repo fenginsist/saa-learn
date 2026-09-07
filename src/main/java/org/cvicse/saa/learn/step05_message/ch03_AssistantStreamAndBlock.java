@@ -6,7 +6,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import reactor.core.publisher.Flux;
 
-public class ch03_StreamAndBlock {
+public class ch03_AssistantStreamAndBlock {
 
 
     public static void main(String[] args) {
