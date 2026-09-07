@@ -10,6 +10,9 @@ import org.springframework.ai.chat.messages.UserMessage;
 
 import java.util.List;
 
+/**
+ * ReactAgent 自动管理消息历史，但你也可以直接使用消息
+ */
 public class ch06_ReactAgentUseMessage {
 
 
@@ -44,10 +47,12 @@ public class ch06_ReactAgentUseMessage {
 
         // 使用字符串
         AssistantMessage response1 = agent.call("你好");
+        System.out.println("response1 = " + response1);
 
         // 使用 UserMessage
         UserMessage userMsg = new UserMessage("帮我写一首诗");
         AssistantMessage response2 = agent.call(userMsg);
+        System.out.println("response2 = " + response2);
 
         // 使用消息列表
         List<Message> messages = List.of(
@@ -55,5 +60,6 @@ public class ch06_ReactAgentUseMessage {
                 new UserMessage("写一首关于春天的诗")
         );
         AssistantMessage response3 = agent.call(messages);
+        System.out.println("response3 = " + response3);
     }
 }
