@@ -38,6 +38,7 @@ public class ch02_UserControlToolProcess {
             prompt = new Prompt(toolExecutionResult.conversationHistory(), chatOptions);
 
             chatResponse = chatModel.call(prompt);
+            System.out.println("111");
         }
 
         System.out.println(chatResponse.getResult().getOutput().getText());
