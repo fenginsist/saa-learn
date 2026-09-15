@@ -46,6 +46,7 @@ public class ch09_ReadUserInfo {
                 .name("my_agent")
                 .model(chatModel)
                 .tools(getUserInfoTool)
+                .interceptors(new ch09_ToolSchemaInterceptor())
                 .saver(new MemorySaver())
                 .build();
 
