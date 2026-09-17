@@ -112,6 +112,9 @@ public class ch02_ReadLongMemoryIntheTool {
 
     @NotNull
     private static DashScopeChatModel getDashScopeChatModel() {
+        String apiKey = System.getenv("AI_DASHSCOPE_API_KEY");
+        System.out.println("apiKey = " + apiKey);
+
         // =========================
         // 创建 DashScope API
         // =========================

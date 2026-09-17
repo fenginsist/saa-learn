@@ -185,6 +185,9 @@ public class ch04_ModelHookManagerLongTermHistory {
 
     @NotNull
     private static DashScopeChatModel getDashScopeChatModel() {
+        String apiKey = System.getenv("AI_DASHSCOPE_API_KEY");
+        System.out.println("apiKey = " + apiKey);
+
         // =========================
         // 1. 创建 DashScope API
         // =========================
