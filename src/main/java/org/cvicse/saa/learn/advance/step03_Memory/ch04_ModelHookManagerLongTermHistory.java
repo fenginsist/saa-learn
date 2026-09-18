@@ -21,6 +21,9 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * 下面的示例展示了如何使用 ModelHook 在模型调用前后自动加载和保存长期记忆。
+ */
 public class ch04_ModelHookManagerLongTermHistory {
     // 创建记忆拦截器
 
@@ -179,6 +182,28 @@ public class ch04_ModelHookManagerLongTermHistory {
                 }
             });
         });
+        /**
+         * apiKey = sk-ws-H.EXXEMEX.Y2dm.MEUCIEXNlQepvp3qup3qIhm93T1vAOg-iRZ_jE93U8ZusX8sAiEAir78N9b9dGhpgafs_Vc_0NJAir88hd62l4OIj9KXR6k
+         * ===== Agent执行完成 =====
+         *
+         * ========== Agent 执行链路 ==========
+         *
+         * ------------------------------------
+         * UserMessage{content='请介绍一下我的信息。', metadata={messageType=USER}, messageType=USER}
+         *
+         * ------------------------------------
+         * SystemMessage{textContent='用户信息：姓名=王小明, 年龄=28, 邮箱=wang@example.com, 偏好=[喜欢咖啡, 喜欢阅读]', messageType=SYSTEM, metadata={messageType=SYSTEM}}
+         *
+         * ------------------------------------
+         * UserMessage{content='请介绍一下我的信息。', metadata={messageType=USER}, messageType=USER}
+         *
+         * ------------------------------------
+         * AssistantMessage [messageType=ASSISTANT, toolCalls=[], textContent=您好，王小明！😊
+         * 根据您提供的信息，您的基本情况如下：
+         *
+         * - **姓名**：王小明
+         * - **年龄**：28岁（正值充满活力与成长潜力的黄金阶段）
+         */
 
 
     }

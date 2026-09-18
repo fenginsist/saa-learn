@@ -28,7 +28,7 @@ public class ch09_ToolSchemaInterceptor extends ModelInterceptor {
         System.out.println("============================================================");
 
         System.out.println();
-        System.out.println("ModelRequest:");
+        System.out.println("ModelRequest（调用大模型前携带的数据，包括tool信息如下）:");
 
         System.out.println(request.toString());
         System.out.println(request.getTools().toString());
@@ -52,7 +52,7 @@ public class ch09_ToolSchemaInterceptor extends ModelInterceptor {
         System.out.println("============================================================");
 
         System.out.println();
-        System.out.println("ModelResponse:");
+        System.out.println("ModelResponse（调用大模型后返回信息，可能包含tool call）:");
 
         System.out.println(response);
         System.out.println(response.getChatResponse());
