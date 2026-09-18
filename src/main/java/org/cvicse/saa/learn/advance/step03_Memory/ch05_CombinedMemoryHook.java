@@ -36,7 +36,9 @@ public class ch05_CombinedMemoryHook extends ModelHook {
         String userId = (String) userIdOpt.get();
 
         Store memoryStore = config.store();
-        // 从长期记忆加载
+        /**
+         * 从长期记忆加载
+         */
         Optional<StoreItem> profileOpt = memoryStore.getItem(List.of("profiles"), userId);
         if (profileOpt.isEmpty()) {
             return CompletableFuture.completedFuture(Map.of());
