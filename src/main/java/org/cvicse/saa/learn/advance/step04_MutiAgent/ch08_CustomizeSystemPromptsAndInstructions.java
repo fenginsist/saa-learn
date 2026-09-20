@@ -14,6 +14,9 @@ import java.util.List;
  *
  * 使用 SystemPrompt
  * systemPrompt 用于设置路由决策的系统提示，会替换默认的系统提示。你可以通过它提供详细的决策规则和上下文：
+ *
+ * 使用 Instruction
+ * instruction 用于设置路由决策的用户指令，会作为 UserMessage 添加到消息列表中。你可以通过它提供额外的上下文信息或特定的路由指导：
  */
 public class ch08_CustomizeSystemPromptsAndInstructions {
     public static void main(String[] args) {
@@ -68,11 +71,22 @@ public class ch08_CustomizeSystemPromptsAndInstructions {
 只返回Agent名称（writer_agent、reviewer_agent、translator_agent），不要包含其他解释。
 """;
 
+        // 使用 instruction 提供额外的路由指导
+        final String ROUTING_INSTRUCTION = """
+请根据用户的需求，选择最合适的Agent来处理任务。
+
+特别注意：
+- 如果用户明确提到"写"、"创作"、"生成"等词汇，优先选择 writer_agent
+- 如果用户提到"修改"、"优化"、"评审"等词汇，选择 reviewer_agent
+- 如果用户提到"翻译"、"转换语言"等词汇，选择 translator_agent
+""";
+
         LlmRoutingAgent routingAgent = LlmRoutingAgent.builder()
                 .name("content_routing_agent")
                 .description("根据用户需求智能路由到合适的专家Agent")
                 .model(chatModel)
                 .systemPrompt(ROUTING_SYSTEM_PROMPT)
+                .instruction(ROUTING_INSTRUCTION)
 //                .subAgents(List.of(writerAgent, reviewerAgent, translatorAgent))
                 .build();
 
