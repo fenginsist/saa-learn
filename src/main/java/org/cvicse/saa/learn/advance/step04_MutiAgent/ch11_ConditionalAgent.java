@@ -12,25 +12,25 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 /**
- * 条件路由 Agent
+ * ConditionalAgent
  *
  * <p>
- * 根据 condition 判断结果：
+ * 根据条件计算结果，从 conditionalAgents 中选择对应的 Agent 执行。
  *
  * <pre>
+ *
  *                    ConditionalAgent
  *                           |
- *                     condition 判断
- *                       /       \
- *                    true       false
- *                     |           |
- *                trueAgent    falseAgent
- * </pre>
+ *                           ↓
+ *                  conditionEvaluator
+ *                           |
+ *              ┌────────────┼────────────┐
+ *              ↓            ↓            ↓
+ *           "urgent"     "normal"    "technical"
+ *              ↓            ↓            ↓
+ *        urgentAgent   normalAgent   technicalAgent
  *
- * <p>
- * 注意：
- * 当前版本使用 FlowGraphBuilder.buildGraph(...)
- * 而不是 buildConditionalGraph(...)
+ * </pre>
  */
 public class ch11_ConditionalAgent extends FlowAgent {
     private final Predicate<Map<String, Object>> condition;
@@ -135,14 +135,6 @@ public class ch11_ConditionalAgent extends FlowAgent {
              * 最终都会作为 subAgents。
              */
 
-            super.validate();
-
-            if (condition == null) {
-                throw new IllegalArgumentException(
-                        "condition must be set"
-                );
-            }
-
             if (trueAgent == null) {
                 throw new IllegalArgumentException(
                         "trueAgent must be set"
@@ -153,6 +145,14 @@ public class ch11_ConditionalAgent extends FlowAgent {
                 throw new IllegalArgumentException(
                         "falseAgent must be set"
                 );
+            }
+
+            this.subAgents = List.of(trueAgent, falseAgent);
+
+            super.validate();
+
+            if (condition == null) {
+                throw new IllegalArgumentException("condition must be set");
             }
         }
 
