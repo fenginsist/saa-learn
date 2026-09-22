@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class ch11_UseConditionalAgent {
@@ -41,19 +42,37 @@ public class ch11_UseConditionalAgent {
                 .build();
 
         // 定义条件：检查输入是否包含"紧急"关键字
-        Predicate<Map<String, Object>> isUrgent = state -> {
-            Object input = state.get("input");
-            if (input instanceof String) {
-                return ((String) input).contains("紧急") || ((String) input).contains("urgent");
+        Function<OverAllState, String> conditionEvaluator = state -> {
+            System.out.println(
+                    "\n========== ConditionalEvaluator =========="
+            );
+
+            System.out.println("State = " + state);
+
+            String input = state.value("input","").toString();
+
+            System.out.println("input = " + input);
+
+            String result;
+
+            if (input.contains("紧急")|| input.contains("urgent")) {
+                result = "true";
+            } else {
+                result = "false";
             }
-            return false;
+
+            System.out.println("condition result = " + result);
+
+            System.out.println("==========================================\n");
+
+            return result;
         };
 
         // 创建条件路由Agent
         ch11_ConditionalAgent conditionalAgent = ch11_ConditionalAgent.builder()
                 .name("priority_router")
                 .description("根据紧急程度路由请求")
-                .condition(isUrgent)
+                .conditionEvaluator(conditionEvaluator)
                 .trueAgent(urgentAgent)
                 .falseAgent(normalAgent)
                 .build();

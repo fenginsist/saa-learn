@@ -9,6 +9,7 @@ import com.alibaba.cloud.ai.graph.exception.GraphStateException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -33,12 +34,12 @@ import java.util.function.Predicate;
  * </pre>
  */
 public class ch11_ConditionalAgent extends FlowAgent {
-    private final Predicate<Map<String, Object>> condition;
+    private final Function<OverAllState, String> conditionEvaluator;
     private final Agent trueAgent;
     private final Agent falseAgent;
 
     /**
-     * 构造 ConditionalAgent
+     * 构造 ch11_ConditionalAgent
      */
     protected ch11_ConditionalAgent(ConditionalAgentBuilder builder) throws GraphStateException {
         super(
@@ -47,7 +48,7 @@ public class ch11_ConditionalAgent extends FlowAgent {
                 builder.compileConfig,
                 List.of(builder.trueAgent, builder.falseAgent)
         );
-        this.condition = builder.condition;
+        this.conditionEvaluator = builder.conditionEvaluator;
         this.trueAgent = builder.trueAgent;
         this.falseAgent = builder.falseAgent;
     }
@@ -55,20 +56,16 @@ public class ch11_ConditionalAgent extends FlowAgent {
     @Override
     protected StateGraph buildSpecificGraph(FlowGraphBuilder.FlowGraphConfig config)
             throws GraphStateException {
-        /*
-         * 把自定义条件函数放入 FlowGraphConfig。
-         *
-         * ConditionalGraphBuildingStrategy
-         * 可以从 customProperty 中获取这个条件函数。
-         */
-        config.customProperty(
-                "condition",
-                this.condition
+
+        config.conditionalAgents(
+                Map.of(
+                        "true", trueAgent,
+                        "false", falseAgent
+                )
         );
 
-        /*
-         * 使用 CONDITIONAL 策略构建图。
-         */
+        config.customProperty("condition", conditionEvaluator);
+
         return FlowGraphBuilder.buildGraph(
                 "CONDITIONAL",
                 config
@@ -88,7 +85,7 @@ public class ch11_ConditionalAgent extends FlowAgent {
         /**
          * 条件判断器
          */
-        private Predicate<Map<String, Object>> condition;
+        private Function<OverAllState, String> conditionEvaluator;
         /**
          * true 分支 Agent
          */
@@ -99,8 +96,8 @@ public class ch11_ConditionalAgent extends FlowAgent {
          */
         private Agent falseAgent;
 
-        public ConditionalAgentBuilder condition(Predicate<Map<String, Object>> condition) {
-            this.condition = condition;
+        public ConditionalAgentBuilder conditionEvaluator(Function<OverAllState, String> conditionEvaluator) {
+            this.conditionEvaluator = conditionEvaluator;
             return this;
         }
 
@@ -149,11 +146,11 @@ public class ch11_ConditionalAgent extends FlowAgent {
 
             this.subAgents = List.of(trueAgent, falseAgent);
 
-            super.validate();
-
-            if (condition == null) {
+            if (conditionEvaluator == null) {
                 throw new IllegalArgumentException("condition must be set");
             }
+
+            super.validate();
         }
 
 
