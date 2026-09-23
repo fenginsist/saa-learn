@@ -2,6 +2,7 @@ package org.cvicse.saa.learn.advance.step04_MutiAgent;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
 import com.alibaba.cloud.ai.graph.OverAllState;
 import com.alibaba.cloud.ai.graph.agent.ReactAgent;
 import com.alibaba.cloud.ai.graph.exception.GraphRunnerException;
@@ -42,40 +43,30 @@ public class ch11_UseConditionalAgent {
                 .build();
 
         // 定义条件：检查输入是否包含"紧急"关键字
-        Function<OverAllState, String> conditionEvaluator = state -> {
-            System.out.println(
-                    "\n========== ConditionalEvaluator =========="
-            );
+        Predicate<Map<String, Object>> isUrgent = state -> {
 
-            System.out.println("State = " + state);
+            Object input = state.get("input");
 
-            String input = state.value("input","").toString();
-
-            System.out.println("input = " + input);
-
-            String result;
-
-            if (input.contains("紧急")|| input.contains("urgent")) {
-                result = "true";
-            } else {
-                result = "false";
+            if (input instanceof String) {
+                String text = (String) input;
+                System.out.println("========== Condition ==========");
+                System.out.println("input = " + text);
+                boolean urgent = text.contains("紧急")|| text.toLowerCase().contains("urgent");
+                System.out.println("condition = " + urgent);
+                return urgent;
             }
 
-            System.out.println("condition result = " + result);
-
-            System.out.println("==========================================\n");
-
-            return result;
+            return false;
         };
 
         // 创建条件路由Agent
         ch11_ConditionalAgent conditionalAgent = ch11_ConditionalAgent.builder()
-                .name("priority_router")
-                .description("根据紧急程度路由请求")
-                .conditionEvaluator(conditionEvaluator)
-                .trueAgent(urgentAgent)
-                .falseAgent(normalAgent)
-                .build();
+                        .name("priority_router")
+                        .description("根据紧急程度路由请求")
+                        .condition(isUrgent)
+                        .trueAgent(urgentAgent)
+                        .falseAgent(normalAgent)
+                        .build();
 
         // 使用
         Optional<OverAllState> result1 = conditionalAgent.invoke("这是一个紧急问题需要立即处理");
@@ -98,6 +89,7 @@ public class ch11_UseConditionalAgent {
         // =========================
         DashScopeApi dashScopeApi = DashScopeApi.builder()
                 .apiKey(System.getenv("AI_DASHSCOPE_API_KEY"))
+                .baseUrl("https://llm-lp68jcoxmr9qifkd.cn-beijing.maas.aliyuncs.com/compatible-mode/v1")
                 .build();
 
         // =========================
@@ -105,6 +97,7 @@ public class ch11_UseConditionalAgent {
         // =========================
         DashScopeChatModel chatModel = DashScopeChatModel.builder()
                 .dashScopeApi(dashScopeApi)
+                .defaultOptions(DashScopeChatOptions.builder().model("qwen3.7-flash-2026-07-15").build())
                 .build();
         return chatModel;
     }

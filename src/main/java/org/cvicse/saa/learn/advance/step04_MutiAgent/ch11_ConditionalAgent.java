@@ -2,15 +2,25 @@ package org.cvicse.saa.learn.advance.step04_MutiAgent;
 
 import com.alibaba.cloud.ai.graph.*;
 import com.alibaba.cloud.ai.graph.agent.Agent;
+import com.alibaba.cloud.ai.graph.agent.BaseAgent;
 import com.alibaba.cloud.ai.graph.agent.flow.agent.FlowAgent;
 import com.alibaba.cloud.ai.graph.agent.flow.builder.FlowAgentBuilder;
 import com.alibaba.cloud.ai.graph.agent.flow.builder.FlowGraphBuilder;
+import com.alibaba.cloud.ai.graph.agent.flow.node.TransparentNode;
+import com.alibaba.cloud.ai.graph.agent.flow.strategy.FlowGraphBuildingStrategy;
 import com.alibaba.cloud.ai.graph.exception.GraphStateException;
+import com.alibaba.cloud.ai.graph.state.strategy.AppendStrategy;
+import com.alibaba.cloud.ai.graph.state.strategy.ReplaceStrategy;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.function.Predicate;
+
+import static com.alibaba.cloud.ai.graph.StateGraph.END;
+import static com.alibaba.cloud.ai.graph.StateGraph.START;
+import static com.alibaba.cloud.ai.graph.action.AsyncEdgeAction.edge_async;
+import static com.alibaba.cloud.ai.graph.action.AsyncNodeAction.node_async;
 
 /**
  * ConditionalAgent
@@ -25,16 +35,26 @@ import java.util.function.Predicate;
  *                           ↓
  *                  conditionEvaluator
  *                           |
- *              ┌────────────┼────────────┐
- *              ↓            ↓            ↓
- *           "urgent"     "normal"    "technical"
- *              ↓            ↓            ↓
- *        urgentAgent   normalAgent   technicalAgent
+ *              ┌────────────┴────────────┐
+ *              ↓                         ↓
+ *           "true"                    "false"
+ *              ↓                         ↓
+ *        urgentAgent              normalAgent
  *
  * </pre>
  */
 public class ch11_ConditionalAgent extends FlowAgent {
-    private final Function<OverAllState, String> conditionEvaluator;
+    /**
+     * 条件判定结果写入状态时使用的 key（与框架 ConditionEvaluator 保持一致）
+     */
+    public static final String CONDITION_RESULT_KEY = "_condition_result";
+
+    /**
+     * 默认分支：条件结果未命中任何分支时直接结束
+     */
+    private static final String DEFAULT_BRANCH = "default";
+
+    private final Predicate<Map<String, Object>> condition;
     private final Agent trueAgent;
     private final Agent falseAgent;
 
@@ -48,7 +68,7 @@ public class ch11_ConditionalAgent extends FlowAgent {
                 builder.compileConfig,
                 List.of(builder.trueAgent, builder.falseAgent)
         );
-        this.conditionEvaluator = builder.conditionEvaluator;
+        this.condition = builder.condition;
         this.trueAgent = builder.trueAgent;
         this.falseAgent = builder.falseAgent;
     }
@@ -57,6 +77,7 @@ public class ch11_ConditionalAgent extends FlowAgent {
     protected StateGraph buildSpecificGraph(FlowGraphBuilder.FlowGraphConfig config)
             throws GraphStateException {
 
+        // 分支映射：key 必须与条件判定返回值一致
         config.conditionalAgents(
                 Map.of(
                         "true", trueAgent,
@@ -64,12 +85,194 @@ public class ch11_ConditionalAgent extends FlowAgent {
                 )
         );
 
-        config.customProperty("condition", conditionEvaluator);
+        // =====================================================
+        // 1. 节点名称
+        // =====================================================
 
-        return FlowGraphBuilder.buildGraph(
-                "CONDITIONAL",
-                config
+        String rootNodeName = this.name;
+
+        String conditionNodeName =
+                rootNodeName + "_condition";
+
+        String trueNodeName =
+                trueAgent.name();
+
+        String falseNodeName =
+                falseAgent.name();
+
+        // =====================================================
+        // 2. 创建 StateGraph（复用框架的 key 合并策略）
+        // =====================================================
+
+        StateGraph graph = new StateGraph(
+                config.getName(),
+                keyStrategyFactory()
         );
+
+        // =====================================================
+        // 3. 根节点（透明节点，仅作为图入口）
+        // =====================================================
+
+        graph.addNode(
+                rootNodeName,
+                node_async(new TransparentNode())
+        );
+
+        graph.addEdge(
+                START,
+                rootNodeName
+        );
+
+        // =====================================================
+        // 4. 创建条件判断节点
+        // =====================================================
+
+        graph.addNode(
+                conditionNodeName,
+                node_async(state -> {
+
+                    Map<String, Object> data = state.data();
+
+                    boolean result = condition.test(data);
+
+                    String route =
+                            result
+                                    ? "true"
+                                    : "false";
+
+                    System.out.println();
+                    System.out.println(
+                            "========== ConditionalAgent =========="
+                    );
+
+                    System.out.println(
+                            "input = " + data.get("input")
+                    );
+
+                    System.out.println(
+                            "condition = " + result
+                    );
+
+                    System.out.println(
+                            "route = " + route
+                    );
+
+                    System.out.println(
+                            "======================================"
+                    );
+
+                    // 状态更新：条件判定结果，供后面的条件边读取
+                    return Map.of(
+                            CONDITION_RESULT_KEY,
+                            route
+                    );
+                })
+        );
+
+        // =====================================================
+        // 5. 添加 true / false 分支 Agent
+        // =====================================================
+
+        FlowGraphBuildingStrategy.addSubAgentNode(
+                trueAgent,
+                graph
+        );
+
+        FlowGraphBuildingStrategy.addSubAgentNode(
+                falseAgent,
+                graph
+        );
+
+        // =====================================================
+        // 6. true / false Agent 最终结束
+        // =====================================================
+
+        graph.addEdge(
+                trueNodeName,
+                END
+        );
+
+        graph.addEdge(
+                falseNodeName,
+                END
+        );
+
+        // =====================================================
+        // 7. 条件路由：按 _condition_result 选择分支
+        // =====================================================
+
+        graph.addConditionalEdges(
+                conditionNodeName,
+                edge_async(state ->
+                        String.valueOf(
+                                state.value(
+                                        CONDITION_RESULT_KEY,
+                                        DEFAULT_BRANCH
+                                )
+                        )
+                ),
+                Map.of(
+                        "true", trueNodeName,
+                        "false", falseNodeName,
+                        DEFAULT_BRANCH, END
+                )
+        );
+
+        // =====================================================
+        // 8. 根节点 -> 条件节点
+        // =====================================================
+
+        graph.addEdge(
+                rootNodeName,
+                conditionNodeName
+        );
+
+        return graph;
+    }
+
+    /**
+     * 状态 key 的合并策略
+     *
+     * <p>
+     * 与框架默认规则保持一致：
+     * messages 追加，input / 条件结果 / 各分支 Agent 的 outputKey 覆盖。
+     */
+    private KeyStrategyFactory keyStrategyFactory() {
+
+        return () -> {
+
+            Map<String, KeyStrategy> strategies =
+                    new HashMap<>();
+
+            strategies.put(
+                    "messages",
+                    new AppendStrategy(false)
+            );
+
+            strategies.put(
+                    "input",
+                    new ReplaceStrategy()
+            );
+
+            strategies.put(
+                    CONDITION_RESULT_KEY,
+                    new ReplaceStrategy()
+            );
+
+            for (Agent agent : List.of(trueAgent, falseAgent)) {
+
+                if (agent instanceof BaseAgent baseAgent
+                        && baseAgent.getOutputKey() != null) {
+
+                    strategies.put(
+                            baseAgent.getOutputKey(),
+                            new ReplaceStrategy()
+                    );
+                }
+            }
+
+            return strategies;
+        };
     }
 
     public static ConditionalAgentBuilder builder() {
@@ -85,7 +288,7 @@ public class ch11_ConditionalAgent extends FlowAgent {
         /**
          * 条件判断器
          */
-        private Function<OverAllState, String> conditionEvaluator;
+        private Predicate<Map<String, Object>> condition;
         /**
          * true 分支 Agent
          */
@@ -96,8 +299,8 @@ public class ch11_ConditionalAgent extends FlowAgent {
          */
         private Agent falseAgent;
 
-        public ConditionalAgentBuilder conditionEvaluator(Function<OverAllState, String> conditionEvaluator) {
-            this.conditionEvaluator = conditionEvaluator;
+        public ConditionalAgentBuilder condition(Predicate<Map<String, Object>> condition) {
+            this.condition = condition;
             return this;
         }
 
@@ -132,6 +335,13 @@ public class ch11_ConditionalAgent extends FlowAgent {
              * 最终都会作为 subAgents。
              */
 
+            if (condition == null) {
+                throw new IllegalArgumentException(
+                        "condition must be set"
+                );
+            }
+
+
             if (trueAgent == null) {
                 throw new IllegalArgumentException(
                         "trueAgent must be set"
@@ -145,10 +355,6 @@ public class ch11_ConditionalAgent extends FlowAgent {
             }
 
             this.subAgents = List.of(trueAgent, falseAgent);
-
-            if (conditionEvaluator == null) {
-                throw new IllegalArgumentException("condition must be set");
-            }
 
             super.validate();
         }
