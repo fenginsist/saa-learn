@@ -89,7 +89,6 @@ public class ch11_UseConditionalAgent {
         // =========================
         DashScopeApi dashScopeApi = DashScopeApi.builder()
                 .apiKey(System.getenv("AI_DASHSCOPE_API_KEY"))
-                .baseUrl("https://llm-lp68jcoxmr9qifkd.cn-beijing.maas.aliyuncs.com/compatible-mode/v1")
                 .build();
 
         // =========================
@@ -97,7 +96,10 @@ public class ch11_UseConditionalAgent {
         // =========================
         DashScopeChatModel chatModel = DashScopeChatModel.builder()
                 .dashScopeApi(dashScopeApi)
-                .defaultOptions(DashScopeChatOptions.builder().model("qwen3.7-flash-2026-07-15").build())
+                .defaultOptions(DashScopeChatOptions.builder()
+                        .model("qwen3.7-flash-2026-07-15")
+                        .multiModel(true)
+                        .build())
                 .build();
         return chatModel;
     }
