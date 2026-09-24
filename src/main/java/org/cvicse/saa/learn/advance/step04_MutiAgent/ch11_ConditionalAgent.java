@@ -90,82 +90,45 @@ public class ch11_ConditionalAgent extends FlowAgent {
         // =====================================================
 
         String rootNodeName = this.name;
-
-        String conditionNodeName =
-                rootNodeName + "_condition";
-
-        String trueNodeName =
-                trueAgent.name();
-
-        String falseNodeName =
-                falseAgent.name();
+        String conditionNodeName = rootNodeName + "_condition";
+        String trueNodeName = trueAgent.name();
+        String falseNodeName = falseAgent.name();
 
         // =====================================================
         // 2. 创建 StateGraph（复用框架的 key 合并策略）
         // =====================================================
-
-        StateGraph graph = new StateGraph(
-                config.getName(),
-                keyStrategyFactory()
-        );
+        StateGraph graph = new StateGraph(config.getName(), keyStrategyFactory());
 
         // =====================================================
         // 3. 根节点（透明节点，仅作为图入口）
         // =====================================================
-
-        graph.addNode(
-                rootNodeName,
-                node_async(new TransparentNode())
-        );
-
-        graph.addEdge(
-                START,
-                rootNodeName
-        );
+        graph.addNode(rootNodeName, node_async(new TransparentNode()));
+        graph.addEdge(START, rootNodeName);
 
         // =====================================================
         // 4. 创建条件判断节点
         // =====================================================
-
         graph.addNode(
                 conditionNodeName,
                 node_async(state -> {
 
                     Map<String, Object> data = state.data();
-
                     boolean result = condition.test(data);
-
-                    String route =
-                            result
-                                    ? "true"
-                                    : "false";
+                    String route = result ? "true" : "false";
 
                     System.out.println();
-                    System.out.println(
-                            "========== ConditionalAgent =========="
-                    );
+                    System.out.println("========== ConditionalAgent ==========");
 
-                    System.out.println(
-                            "input = " + data.get("input")
-                    );
+                    System.out.println("input = " + data.get("input"));
 
-                    System.out.println(
-                            "condition = " + result
-                    );
+                    System.out.println("condition = " + result);
 
-                    System.out.println(
-                            "route = " + route
-                    );
+                    System.out.println("route = " + route);
 
-                    System.out.println(
-                            "======================================"
-                    );
+                    System.out.println("======================================");
 
                     // 状态更新：条件判定结果，供后面的条件边读取
-                    return Map.of(
-                            CONDITION_RESULT_KEY,
-                            route
-                    );
+                    return Map.of(CONDITION_RESULT_KEY, route);
                 })
         );
 
@@ -173,29 +136,17 @@ public class ch11_ConditionalAgent extends FlowAgent {
         // 5. 添加 true / false 分支 Agent
         // =====================================================
 
-        FlowGraphBuildingStrategy.addSubAgentNode(
-                trueAgent,
-                graph
-        );
+        FlowGraphBuildingStrategy.addSubAgentNode(trueAgent, graph);
 
-        FlowGraphBuildingStrategy.addSubAgentNode(
-                falseAgent,
-                graph
-        );
+        FlowGraphBuildingStrategy.addSubAgentNode(falseAgent, graph);
 
         // =====================================================
         // 6. true / false Agent 最终结束
         // =====================================================
 
-        graph.addEdge(
-                trueNodeName,
-                END
-        );
+        graph.addEdge(trueNodeName, END);
 
-        graph.addEdge(
-                falseNodeName,
-                END
-        );
+        graph.addEdge(falseNodeName, END);
 
         // =====================================================
         // 7. 条件路由：按 _condition_result 选择分支
@@ -222,10 +173,7 @@ public class ch11_ConditionalAgent extends FlowAgent {
         // 8. 根节点 -> 条件节点
         // =====================================================
 
-        graph.addEdge(
-                rootNodeName,
-                conditionNodeName
-        );
+        graph.addEdge(rootNodeName, conditionNodeName);
 
         return graph;
     }
@@ -241,26 +189,15 @@ public class ch11_ConditionalAgent extends FlowAgent {
 
         return () -> {
 
-            Map<String, KeyStrategy> strategies =
-                    new HashMap<>();
+            Map<String, KeyStrategy> strategies = new HashMap<>();
 
-            strategies.put(
-                    "messages",
-                    new AppendStrategy(false)
-            );
+            strategies.put("messages", new AppendStrategy(false));
 
-            strategies.put(
-                    "input",
-                    new ReplaceStrategy()
-            );
+            strategies.put("input", new ReplaceStrategy());
 
-            strategies.put(
-                    CONDITION_RESULT_KEY,
-                    new ReplaceStrategy()
-            );
+            strategies.put(CONDITION_RESULT_KEY, new ReplaceStrategy());
 
             for (Agent agent : List.of(trueAgent, falseAgent)) {
-
                 if (agent instanceof BaseAgent baseAgent
                         && baseAgent.getOutputKey() != null) {
 

@@ -1,0 +1,75 @@
+[
+  {
+    "OverAllState": {
+      "data": {
+        "_graph_execution_id_": "11b34e7f-d88e-456d-8d0f-8157fd1f41d2",
+        "input": "帮我写一个100字左右的散文",
+        "messages": [
+          {
+            "messageType": "USER",
+            "metadata": {
+              "messageType": "USER"
+            },
+            "media": [],
+            "text": "帮我写一个100字左右的散文"
+          },
+          {
+            "messageType": "ASSISTANT",
+            "metadata": {
+              "role": "ASSISTANT",
+              "messageType": "ASSISTANT",
+              "finishReason": "TOOL_CALLS",
+              "refusal": "",
+              "index": 0,
+              "annotations": [
+                {}
+              ],
+              "id": "chatcmpl-7161762c-1d76-92e0-b875-c3b14ebd7a93"
+            },
+            "toolCalls": [
+              {
+                "id": "call_c282404c70064fedb1993656",
+                "type": "function",
+                "name": "writer_agent",
+                "arguments": "{\"input\": \"请以“微雨初霁”为主题，写一篇100字左右的散文。要求语言清新自然，意境悠远，描绘雨后初晴时分的宁静与生机。\"}"
+              }
+            ],
+            "media": [],
+            "text": ""
+          },
+          {
+            "messageType": "TOOL",
+            "metadata": {
+              "messageType": "TOOL"
+            },
+            "responses": [
+              {
+                "id": "call_c282404c70064fedb1993656",
+                "name": "writer_agent",
+                "responseData": "微雨初霁，云隙漏下淡金晨光。青石板湿痕斑驳，叶尖悬露欲滴，风过处，簌簌点破浅洼。远林忽落一声鸟鸣，轻轻荡开满巷寂静。空气沁着泥土与青草的微芳，天地似刚从长梦中醒来。万物敛息，却自有生生不息的脉动。"
+              }
+            ],
+            "text": ""
+          },
+          {
+            "messageType": "ASSISTANT",
+            "metadata": {
+              "role": "ASSISTANT",
+              "messageType": "ASSISTANT",
+              "finishReason": "STOP",
+              "refusal": "",
+              "index": 0,
+              "annotations": [
+                {}
+              ],
+              "id": "chatcmpl-769003bc-8f2d-9f3f-9ff0-840c08394bb0"
+            },
+            "toolCalls": [],
+            "media": [],
+            "text": "微雨初霁，云隙漏下淡金晨光。青石板湿痕斑驳，叶尖悬露欲滴，风过处，簌簌点破浅洼。远林忽落一声鸟鸣，轻轻荡开满巷寂静。空气沁着泥土与青草的微芳，天地似刚从长梦中醒来。万物敛息，却自有生生不息的脉动。"
+          }
+        ]
+      }
+    }
+  }
+]
